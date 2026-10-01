@@ -19,6 +19,26 @@ async function api(path,body) {
   const data = await res.json(); if (!res.ok) throw Error(data.error || 'No se pudo conectar.'); return data;
 }
 function adopt(data) { room=data.room; role=data.role; teamId=data.teamId; if(data.token) {token=data.token; storage.set(googleBackend?'imposibles-google-session':'imposibles-session',token);} }
+const blockedControls = new Map();
+function syncBusyControls() {
+  app.setAttribute('aria-busy',String(busy));
+  if(busy) {
+    for(const control of app.querySelectorAll('button, input, textarea, select')) {
+      if(!blockedControls.has(control)) blockedControls.set(control,control.disabled);
+      control.disabled=true;
+    }
+  } else {
+    for(const [control,disabled] of blockedControls) control.disabled=disabled;
+    blockedControls.clear();
+  }
+}
+async function requestAction(callback) {
+  if(busy) return;
+  busy=true;actionVersion++;clearTimeout(draftTimer);syncBusyControls();
+  try { await callback(); }
+  catch(e) { toast(e.message); }
+  finally { busy=false;syncBusyControls(); }
+}
 function header() {
   if(room?.phase==='lobby') return `<header class="topbar lobby-topbar"><a class="brand" href="./"><span class="brand-icon">✦</span> IMPOSIBLES<span class="brand-dot">!</span></a><div class="lobby-header-right"><span class="lobby-identity">${role==='admin'?'Administrador':`${icon(teamId)} ${esc(team(teamId)?.name)}`}</span><button class="quiet" data-action="home">Salir <span>↗</span></button></div></header>`;
   return `<header class="topbar"><a class="brand" href="./"><span class="brand-icon">✦</span> IMPOSIBLES<span class="brand-dot">!</span></a><span class="edition">ACTIVIDAD 03 <i></i> EDICIÓN HALLOWEEN</span><button class="quiet" data-action="home">${room?'Salir':'Cómo jugar'} <span>↗</span></button></header>`; }
@@ -36,7 +56,7 @@ function card(entry, kind, author, selectable=false) {
 }
 function timer(t) { return `<div class="timer" aria-label="Tiempo restante"><span>TIEMPO RESTANTE</span><div class="clock-face"><b id="clock" data-deadline="${t.deadline}">04:00</b></div><div class="time-track"><i id="time-bar"></i></div></div>`; }
 function render() {
-  if(!room) return landing();
+  if(!room) {landing();syncBusyControls();return;}
   document.body.classList.toggle('voting-view',room.phase==='voting'&&role==='team');
   const t=team(teamId); const key=`${room.phase}:${teamId}:${t?.index}:${t?.done}`;
   const screenChanged=key!==screenKey;
@@ -47,6 +67,7 @@ function render() {
   equalizePodium();
   sizeTutorialCards();
   sizeCharacterCards();
+  syncBusyControls();
 }
 function lobbyCount() {
   const player=role==='team';
@@ -105,35 +126,35 @@ function results() {
 }
 
 async function action(name,data={}) {
-  if(busy) return; busy=true;actionVersion++;clearTimeout(draftTimer);
-  try {
+  return requestAction(async()=>{
     if(demo) { if(name==='start')start(room); else if(name==='advance')advance(room); else submit(room,teamId,data,Date.now(),data.automatic===true); }
     else adopt(await api('action',{action:name,data,phase:room.phase,index:team(teamId)?.index}));
     render();
-  } catch(e){toast(e.message);} finally{busy=false;}
+  });
 }
 app.addEventListener('submit',async e=>{
-  e.preventDefault(); const data=Object.fromEntries(new FormData(e.target));
-  if(e.target.id==='admin-form'){try{adopt(await api('admin',data));document.querySelector('#admin-dialog').close();render();}catch(e){toast(e.message);}return;}
+  e.preventDefault(); if(busy)return; const data=Object.fromEntries(new FormData(e.target));
+  if(e.target.id==='admin-form')return requestAction(async()=>{adopt(await api('admin',data));document.querySelector('#admin-dialog').close();render();});
   if(e.target.id==='creation-form') return action('submit',data);
-  try {adopt(await api('join',data));render();} catch(e){toast(e.message);}
+  return requestAction(async()=>{adopt(await api('join',data));render();});
 });
 function saveDraft(){
-  if (!room || role!=='team')return;
+  if (busy || !room || role!=='team')return;
   const data=room.phase==='voting'?{choice:selection}:draft;
   if(demo){const t=team(teamId);t.pending={...data};return;}
   const snapshot={action:'draft',data:{...data},phase:room.phase,index:team(teamId)?.index};
   clearTimeout(draftTimer);draftTimer=setTimeout(()=>api('action',snapshot).catch(()=>toast('No se guardó el borrador. Revisa tu conexión antes de finalizar.')),googleBackend?1500:180);
 }
-app.addEventListener('input',e=>{if(e.target.closest('#creation-form')){draft[e.target.name]=e.target.value;saveDraft();}});
-app.addEventListener('change',e=>{if(e.target.id==='demo-view'){role=e.target.value==='admin'?'admin':'team';teamId=role==='team'?e.target.value:null;render();}});
+app.addEventListener('input',e=>{if(!busy&&e.target.closest('#creation-form')){draft[e.target.name]=e.target.value;saveDraft();}});
+app.addEventListener('change',e=>{if(!busy&&e.target.id==='demo-view'){role=e.target.value==='admin'?'admin':'team';teamId=role==='team'?e.target.value:null;render();}});
 app.addEventListener('click',async e=>{
+  if(busy)return;
   const choice=e.target.closest('[data-choice]');
   if(choice){selection=choice.dataset.choice;saveDraft();render();document.querySelector('.card-select[aria-pressed="true"]')?.closest('.vote-card-option').classList.add('choice-feedback');document.querySelector('.card-select[aria-pressed="true"]')?.focus({preventScroll:true});return;}
   const button=e.target.closest('[data-action]');if(!button)return;
   const name=button.dataset.action;
   if(name==='home'){if(!room)return document.querySelector('#how').scrollIntoView({behavior:'smooth'});if(!confirm('¿Salir de esta vista? Podrás regresar recargando si es una partida local.'))return; room=null;demo=false;screenKey='';landing();return;}
-  if(name==='admin'){if(googleBackend){document.querySelector('#admin-dialog').showModal();return;}try {adopt(await api('admin',{}));render();}catch(e){toast(e.message);}return;}
+  if(name==='admin'){if(googleBackend){document.querySelector('#admin-dialog').showModal();return;}return requestAction(async()=>{adopt(await api('admin',{}));render();});}
   if(name==='demo'){demo=true;room=createRoom();['Los Cazacaos','Liga Fantasma','Calabazas Atómicas','Guardianes del Trueno'].forEach(n=>join(room,n));role='admin';teamId=null;render();window.scrollTo({top:0,left:0,behavior:'instant'});return;}
   if(name==='close-admin'){document.querySelector('#admin-dialog').close();return;}
   if(name==='start')return action('start');
