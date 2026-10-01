@@ -1,4 +1,5 @@
 export const MIN_TEAMS = 4;
+export const MAX_TEAMS = 8;
 export const durations = { villain: 240000, heroes: 240000, voting: 180000 };
 export const uid = () => globalThis.crypto.randomUUID();
 export function shuffle(items) {
@@ -14,7 +15,7 @@ export function join(room, name) {
   name = String(name || '').trim().slice(0, 32);
   if (!name) throw Error('Escribe el nombre de tu equipo.');
   if (room.teams.some(t => t.name.toLowerCase() === name.toLowerCase())) throw Error('Ese nombre ya está en la sala.');
-  if (room.teams.length >= 20) throw Error('La sala admite hasta 20 equipos.');
+  if (room.teams.length >= MAX_TEAMS) throw Error(`La sala admite hasta ${MAX_TEAMS} equipos.`);
   const team = { id: uid(), name, villain: null, index: 0, done: false, queue: [], deadline: null };
   room.teams.push(team); return team;
 }
@@ -30,6 +31,7 @@ function transition(room, phase, now) {
 export function start(room, now = Date.now()) {
   if (room.phase !== 'lobby') throw Error('La partida ya comenzó.');
   if (room.teams.length < MIN_TEAMS) throw Error(`Se necesitan al menos ${MIN_TEAMS} equipos para iniciar el juego.`);
+  if (room.teams.length > MAX_TEAMS) throw Error(`La sala admite hasta ${MAX_TEAMS} equipos.`);
   transition(room, 'villain', now);
 }
 const clean = (v, limit) => String(v || '').trim().slice(0, limit);
