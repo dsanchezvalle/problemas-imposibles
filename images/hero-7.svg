@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 260">
+  <title>Héroe de la iniciativa</title>
+  <desc>Personaje con máscara de tela completa, lentes gráficos, guantes y uniforme de silueta suave. Su identidad se expresa en el gesto y las herramientas. Ilustración de cómic.</desc>
+  <defs>
+    <pattern id="print" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="#ed976d" opacity=".16"/></pattern>
+    <pattern id="fabric" width="6" height="6" patternUnits="userSpaceOnUse"><path d="M0 6l6-6" stroke="#111628" stroke-width=".6" opacity=".13"/></pattern>
+    <radialGradient id="hero-aura" gradientUnits="userSpaceOnUse" cx="190" cy="108" r="128">
+      <stop stop-color="#ed976d" stop-opacity=".22"/><stop offset="1" stop-color="#ed976d" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="hero-glint">
+      <stop stop-color="#f5e5c5" stop-opacity=".3"/><stop offset="1" stop-color="#ed976d" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="360" height="260" fill="#512c42"/>
+  <path d="M190 135L24 0h77l89 107L223 0h55l-69 109L360 32v67l-143 47L360 214v46l-173-86L42 260H0l148-123L0 81V28z" fill="#ed976d" opacity=".13"/>
+  <circle cx="190" cy="108" r="75" fill="#ed976d" opacity=".13"/>
+  <circle cx="190" cy="108" r="65" fill="none" stroke="#ed976d" stroke-width="1.5" opacity=".45"/>
+  <rect width="360" height="260" fill="url(#hero-aura)"/>
+  <rect width="360" height="260" fill="url(#print)"/>
+  <path d="M0 245h25v-26h20v-25h29v42h24v-18h20v42H0m242 0v-29h27v-36h24v20h33v-33h19v44h15v34z" fill="#111628" opacity=".55"/>
+  <!-- Destellos de fondo: luz suave, detrás del personaje. -->
+  <circle cx="48" cy="127" r="24" fill="url(#hero-glint)"/>
+  <circle cx="284" cy="67" r="29" fill="url(#hero-glint)"/>
+  <path d="M48 116l2.5 8.5 8.5 2.5-8.5 2.5-2.5 8.5-2.5-8.5-8.5-2.5 8.5-2.5zM284 53l3 11 11 3-11 3-3 11-3-11-11-3 11-3z" fill="#f5e5c5" opacity=".85"/>
+  <g fill="#f5e5c5" opacity=".55"><circle cx="116" cy="54" r="1.5"/><circle cx="320" cy="139" r="1.8"/><circle cx="38" cy="101" r="1.2"/></g>
+  <g stroke-linejoin="round" stroke-linecap="round">
+    <path d="M159 145q-41 12-65 60l-25 39 65-11 39 20 20-88z" fill="#7357bb" stroke="#111628" stroke-width="5"/><path d="M147 162l-34 51m44-31-11 43" stroke="#111628" opacity=".3" stroke-width="4"/>
+    <path d="M158 161q12-14 27-14h10q17 0 28 14l10 99h-83z" fill="#ed976d" stroke="#111628" stroke-width="5"/>
+    <path d="M202 151l15 17 10 89h-17z" fill="#111628" opacity=".15"/>
+    <path d="M160 173l-3 57m8-64 5-4" fill="none" stroke="#f5e5c5" stroke-width="4" opacity=".7"/>
+    <path d="M157 160l-44 27-17-13-15 15 23 28 18 1 42-26" fill="#ed976d" stroke="#111628" stroke-width="5"/><path d="M224 160l30 23 26-20 17 16-33 35q-9 8-21-1l-33-24" fill="#ed976d" stroke="#111628" stroke-width="5"/><path d="M278 166l-4-14 6-20q4-8 9-4l-1 16 11-17q5-5 9 1l-9 24 18-5q9-1 9 5l-13 14-16 14z" fill="#7357bb" stroke="#111628" stroke-width="4"/><path d="M61 128l25-25 26 25-26 25z" fill="#ed976d" stroke="#111628" stroke-width="4"/><path d="M78 128h16m-8-8v16" stroke="#111628" stroke-width="4"/>
+    <!-- La cara es una máscara de tela: costuras y lentes, sin piel expuesta. -->
+    <path d="M176 133v17l14 10 14-10v-17" fill="#7357bb" stroke="#111628" stroke-width="4"/>
+    <path d="M155 91q0-39 35-39t35 39v18q-1 30-35 43-34-13-35-43z" fill="#7357bb" stroke="#111628" stroke-width="5"/>
+    <path d="M203 61q16 11 16 32v16q-1 23-29 38l12-24z" fill="#111628" opacity=".14"/>
+    <path d="M155 91q0-39 35-39t35 39v18q-1 30-35 43-34-13-35-43z" fill="url(#fabric)"/>
+    <path d="M190 55v26m0 38v22" stroke="#f5e5c5" stroke-width="1.5" stroke-dasharray="2 4" opacity=".45"/>
+    <path d="M183 57l7 12 7-12" fill="none" stroke="#ed976d" stroke-width="4"/>
+    <path d="M157 91q17-13 33-6 16-7 33 6l-3 21-22 7-8-7-8 7-22-7z" fill="#111628"/>
+    <path d="M162 94q11-7 23 0l-3 12q-15 5-20-12zM195 94q12-7 23 0-5 17-20 12z" fill="#f5e5c5"/>
+    <path d="M161 120l9 7m49-7-9 7m-35 7 7 3m23-3-7 3" fill="none" stroke="#ed976d" stroke-width="2" opacity=".65"/>
+    <path d="M165 146l25 11 27-11-1 13-26 10-27-10z" fill="#7357bb" stroke="#111628" stroke-width="4"/>
+    <path d="M193 166l-15 19h12l-6 20 22-26h-15z" fill="#111628"/>
+    <path d="M147 232h85v11h-85z" fill="#111628"/><rect x="181" y="230" width="18" height="15" rx="3" fill="#7357bb" stroke="#111628" stroke-width="3"/>
+    <path d="M38 72h16m-8-8v16M309 99h14m-7-7v14" fill="none" stroke="#ed976d" stroke-width="3"/>
+    <path d="M294 41l10-13 10 13m-20 12 10-13 10 13" fill="none" stroke="#ed976d" stroke-width="3" opacity=".7"/>
+  </g>
+</svg>
