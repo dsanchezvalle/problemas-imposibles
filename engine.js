@@ -39,7 +39,7 @@ export function submit(room, teamId, data = {}, now = Date.now(), automatic = fa
   if (room.phase === 'villain' || room.phase === 'heroes') {
     const fields = room.phase === 'villain' ? ['name','power','damage'] : ['name','power','plan'];
     if (!automatic && fields.some(k => !clean(data[k], 1200))) throw Error('Completa todos los campos antes de finalizar.');
-    const entry = Object.fromEntries(fields.map(k => [k, clean(data[k], k === 'name' ? 60 : 1200) || (k === 'name' ? 'Sin nombre' : 'El equipo no completó este campo a tiempo.')]));
+    const entry = Object.fromEntries(fields.map(k => [k, clean(data[k], k === 'name' ? 30 : k === 'power' ? 80 : 140) || (k === 'name' ? 'Sin nombre' : 'El equipo no completó este campo a tiempo.')]));
     entry.incomplete = fields.some(k => !clean(data[k], 1200));
     if (room.phase === 'villain') { t.villain = entry; t.done = true; }
     else { room.heroes.push({ ...entry, id: uid(), teamId: t.id, villainId: t.queue[t.index] }); t.index++; }
