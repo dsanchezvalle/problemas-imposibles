@@ -1,7 +1,7 @@
-import { MIN_TEAMS, createRoom, join, start, submit, tick, advance, scores } from './engine.js';
+import { MIN_TEAMS, createRoom, join, start, submit, tick, advance, scores } from './engine.js?v=20261001-clon';
 import { config } from './config.js';
 import { GoogleTransport } from './google-transport.js';
-import { lobbyTutorial, sizeTutorialCards } from './lobby-tutorial.js';
+import { lobbyTutorial, sizeTutorialCards } from './lobby-tutorial.js?v=20261001-clon';
 const app = document.querySelector('#app');
 const googleBackend = !!config.appsScriptUrl;
 let transport, polling = false, lastPoll = 0, actionVersion = 0;
