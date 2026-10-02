@@ -159,7 +159,7 @@ app.addEventListener('click',async e=>{
   if(name==='close-admin'){document.querySelector('#admin-dialog').close();return;}
   if(name==='start')return action('start');
   if(name==='advance'){if(confirm('¿Finalizar toda la ronda? Las respuestas pendientes se marcarán como incompletas y los votos sin enviar como abstenciones.'))action('advance');return;}
-  if(name==='finish'){if(confirm('¿Finalizar el juego y mostrar los resultados? Los votos pendientes se enviarán con la selección guardada; sin selección serán abstenciones.'))action('finish');return;}
+  if(name==='finish')return action('finish');
   if(name==='vote')return action('submit',{choice:selection});
   if(name==='copy'){try{const url=new URL(location.href);url.search='';await navigator.clipboard.writeText(url.href);toast(googleBackend?'Enlace copiado. Los equipos entran aquí con su nombre.':'Enlace copiado. En otros dispositivos usa la IP local del servidor en lugar de localhost.');}catch{toast('Comparte esta dirección para que los equipos ingresen con su nombre.');}return;}
   if(name==='download'){const blob=new Blob([JSON.stringify({...room,scores:scores(room)},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`imposibles-proactividad.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);return;}
