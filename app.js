@@ -13,10 +13,23 @@ const names = { lobby:'Sala de espera', villain:'Crear al villano', heroes:'Crea
 const icons = ['🦇','👻','🎃','⚡','🕷️','🌙','🧪','💀'];
 const icon = id => icons[Math.max(0,room.teams.findIndex(t=>t.id===id))%icons.length];
 function toast(message) { const el = document.querySelector('#toast'); el.textContent=message; el.classList.add('show'); clearTimeout(toast.timer); toast.timer=setTimeout(()=>el.classList.remove('show'),5000); }
+function returnHome(clearSession=true) {
+  actionVersion++;clearTimeout(draftTimer);
+  if(clearSession){storage.remove(googleBackend?'imposibles-google-session':'imposibles-session');token=null;}
+  room=null;role=null;teamId=null;demo=false;screenKey='';draft={};selection=null;networkFailed=false;
+  landing();window.scrollTo({top:0,left:0,behavior:'instant'});
+}
 async function api(path,body) {
-  if(googleBackend) return transport.request(path,body || {},token || '');
-  const res = await fetch(`./api/${path}`, { method:body?'POST':'GET', headers:{'Content-Type':'application/json',...(token?{Authorization:`Bearer ${token}`}:{})}, ...(body?{body:JSON.stringify(body)}:{}) });
-  const data = await res.json(); if (!res.ok) throw Error(data.error || 'No se pudo conectar.'); return data;
+  const requestToken=token;
+  try {
+    if(googleBackend) return await transport.request(path,body || {},token || '');
+    const res = await fetch(`./api/${path}`, { method:body?'POST':'GET', headers:{'Content-Type':'application/json',...(token?{Authorization:`Bearer ${token}`}:{})}, ...(body?{body:JSON.stringify(body)}:{}) });
+    const data = await res.json(); if (!res.ok) throw Error(data.error || 'No se pudo conectar.'); return data;
+  } catch(e) {
+    const ended=/^(La sesión terminó\. Vuelve a ingresar\.|Vuelve a ingresar a la sala\.)$/.test(e.message);
+    if(ended&&requestToken&&requestToken===token&&!demo){returnHome();toast('La partida terminó. Puedes ingresar de nuevo.');}
+    throw e;
+  }
 }
 function adopt(data) { room=data.room; role=data.role; teamId=data.teamId; if(data.token) {token=data.token; storage.set(googleBackend?'imposibles-google-session':'imposibles-session',token);} }
 const blockedControls = new Map();
@@ -34,14 +47,15 @@ function syncBusyControls() {
 }
 async function requestAction(callback) {
   if(busy) return;
-  busy=true;actionVersion++;clearTimeout(draftTimer);syncBusyControls();
+  busy=true;actionVersion++;const requestVersion=actionVersion;clearTimeout(draftTimer);syncBusyControls();
   try { await callback(); }
-  catch(e) { toast(e.message); }
+  catch(e) { if(requestVersion===actionVersion)toast(e.message); }
   finally { busy=false;syncBusyControls(); }
 }
 function header() {
-  if(room?.phase==='lobby') return `<header class="topbar lobby-topbar"><a class="brand" href="./"><span class="brand-icon">✦</span> IMPOSIBLES<span class="brand-dot">!</span></a><div class="lobby-header-right"><span class="lobby-identity">${role==='admin'?'Administrador':`${icon(teamId)} ${esc(team(teamId)?.name)}`}</span><button class="quiet" data-action="home">Salir <span>↗</span></button></div></header>`;
-  return `<header class="topbar"><a class="brand" href="./"><span class="brand-icon">✦</span> IMPOSIBLES<span class="brand-dot">!</span></a><span class="edition">ACTIVIDAD 03 <i></i> EDICIÓN HALLOWEEN</span><button class="quiet" data-action="home">${room?'Salir':'Cómo jugar'} <span>↗</span></button></header>`; }
+  const exit=role==='admin'?'<button class="quiet" data-action="home">Salir <span>↗</span></button>':'';
+  if(room?.phase==='lobby') return `<header class="topbar lobby-topbar"><a class="brand" href="./"><span class="brand-icon">✦</span> IMPOSIBLES<span class="brand-dot">!</span></a><div class="lobby-header-right"><span class="lobby-identity">${role==='admin'?'Administrador':`${icon(teamId)} ${esc(team(teamId)?.name)}`}</span>${exit}</div></header>`;
+  return `<header class="topbar"><a class="brand" href="./"><span class="brand-icon">✦</span> IMPOSIBLES<span class="brand-dot">!</span></a><span class="edition">ACTIVIDAD 03 <i></i> EDICIÓN HALLOWEEN</span>${room?exit:'<button class="quiet" data-action="home">Cómo jugar <span>↗</span></button>'}</header>`; }
 function steps() { const current=['villain','heroes','voting','results'].indexOf(room.phase); return `<nav class="steps" aria-label="Rondas">${['Villanos','Héroes','Votación','Resultados'].map((s,i)=>`<span class="${current===i?'active':current>i?'passed':''}"><b>${current>i?'✓':`0${i+1}`}</b> ${s}</span>`).join('')}</nav>`; }
 function landing() {
   document.body.classList.remove('voting-view');
@@ -146,7 +160,8 @@ function saveDraft(){
   const data=room.phase==='voting'?{choice:selection}:draft;
   if(demo){const t=team(teamId);t.pending={...data};return;}
   const snapshot={action:'draft',data:{...data},phase:room.phase,index:team(teamId)?.index};
-  clearTimeout(draftTimer);draftTimer=setTimeout(()=>api('action',snapshot).catch(()=>toast('No se guardó el borrador. Revisa tu conexión antes de finalizar.')),googleBackend?1500:180);
+  const draftVersion=actionVersion;
+  clearTimeout(draftTimer);draftTimer=setTimeout(()=>api('action',snapshot).catch(()=>{if(draftVersion===actionVersion)toast('No se guardó el borrador. Revisa tu conexión antes de finalizar.');}),googleBackend?1500:180);
 }
 app.addEventListener('input',e=>{if(!busy&&e.target.closest('#creation-form')){draft[e.target.name]=e.target.value;saveDraft();}});
 app.addEventListener('change',e=>{if(!busy&&e.target.id==='demo-view'){role=e.target.value==='admin'?'admin':'team';teamId=role==='team'?e.target.value:null;render();}});
@@ -156,7 +171,15 @@ app.addEventListener('click',async e=>{
   if(choice){selection=choice.dataset.choice;saveDraft();render();document.querySelector('.card-select[aria-pressed="true"]')?.closest('.vote-card-option').classList.add('choice-feedback');document.querySelector('.card-select[aria-pressed="true"]')?.focus({preventScroll:true});return;}
   const button=e.target.closest('[data-action]');if(!button)return;
   const name=button.dataset.action;
-  if(name==='home'){if(!room)return document.querySelector('#how').scrollIntoView({behavior:'smooth'});if(!confirm('¿Salir de esta vista? Podrás regresar recargando si es una partida local.'))return; room=null;demo=false;screenKey='';landing();return;}
+  if(name==='home'){
+    if(!room)return document.querySelector('#how').scrollIntoView({behavior:'smooth'});
+    if(role!=='admin')return;
+    return requestAction(async()=>{
+      if(!demo)await api('action',{action:'reset'});
+      // La demo es independiente: no borrar una sesión real al salir de ella.
+      returnHome(!demo);
+    });
+  }
   if(name==='admin'){if(googleBackend){document.querySelector('#admin-dialog').showModal();return;}return requestAction(async()=>{adopt(await api('admin',{}));render();});}
   if(name==='demo'){demo=true;room=createRoom();['Los Cazacaos','Liga Fantasma','Calabazas Atómicas','Guardianes del Trueno'].forEach(n=>join(room,n));role='admin';teamId=null;render();window.scrollTo({top:0,left:0,behavior:'instant'});return;}
   if(name==='toggle-password'){
@@ -198,7 +221,7 @@ setInterval(async()=>{
   if(busy||polling||Date.now()-lastPoll<(googleBackend?5000:750))return;
   polling=true;lastPoll=Date.now();const pollVersion=actionVersion;
   try{const old=JSON.stringify(room);const oldPhase=room.phase;const oldIndex=t?.index;const oldDone=t?.done;const data=await api('state');if(pollVersion!==actionVersion)return;adopt(data);if(networkFailed){networkFailed=false;toast('Conexión recuperada.');}const next=team(teamId);if(old!==JSON.stringify(room)&&(role==='admin'||oldPhase==='lobby'||oldDone||oldPhase!==room.phase||oldIndex!==next?.index||oldDone!==next?.done))render();}
-  catch(e){if(!networkFailed){networkFailed=true;toast('Sin conexión. Intentando reconectar… '+e.message);}const el=document.querySelector('#connection');if(el)el.textContent='● Reconectando';}
+  catch(e){if(pollVersion!==actionVersion)return;if(!networkFailed){networkFailed=true;toast('Sin conexión. Intentando reconectar… '+e.message);}const el=document.querySelector('#connection');if(el)el.textContent='● Reconectando';}
   finally{polling=false;}
 },750);
 async function init(){
