@@ -438,3 +438,16 @@ dialog{background:var(--panel);color:var(--ink);border:1px solid var(--purple);b
   .podium:has(>.podium-place:only-child)>.place-1{grid-column:1}
   .podium:has(>.place-2):not(:has(>.place-3)){grid-template-columns:repeat(2,minmax(0,1fr));max-width:700px}
 }
+
+/* Visibilidad de la contraseña de administrador. */
+.password-field{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.password-field input{flex:1;min-width:0;margin:0}
+.password-toggle{flex:none;display:grid;place-items:center;width:46px;height:46px;padding:10px;border:1px solid var(--border);border-radius:6px;background:var(--panel);color:var(--ink)}
+.password-toggle:hover{border-color:var(--orange);color:var(--orange)}
+
+.password-eye-slash{display:none}
+.password-toggle[aria-pressed="true"] .password-eye-slash{display:block}
+
+.admin-dialog-actions{display:flex;align-items:center;justify-content:center;gap:16px}
+.admin-dialog-actions .button{flex:0 1 auto;min-width:0;justify-content:center;text-align:center;padding-inline:16px}
+.admin-dialog-actions .quiet{flex:none;margin:0;padding:12px 0}
